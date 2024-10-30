@@ -11,6 +11,7 @@ Flask-PyMongo==2.3.0
 Flask-SocketIO==5.4.1
 fsspec==2024.10.0
 gTTS==2.5.3
+gunicorn
 h11==0.14.0
 huggingface-hub==0.26.1
 idna==3.10
