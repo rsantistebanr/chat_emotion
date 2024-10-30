@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+</head>
+<body>
+    <div class="chatbox"> 
+        <div id="register-screen">
+            <div class="back-arrow">
+                <a href="/login"><</a> <!-- Icono de retroceso -->
+            </div>
+            <h2 style="color:#fff;">REGISTRATE</h2>
+            <form id="register-form" action="/register" method="POST">
+                <input type="text" name="name" placeholder="Nombre Completo" required>
+                <input type="number" name="age" placeholder="Edad" required>
+                <select name="gender" id="gender" required>
+                    <option value="">- Seleccionar -</option>
+                    <option value="H">Hombre</option>
+                    <option value="M">Mujer</option>
+                </select>
+                <input type="text" name="user" placeholder="Usuario" required>
+                <input type="password" name="password" placeholder="Contraseña" required>
+                <button type="submit">Registrarse</button>
+                {% if error %}
+                    <p style="color:red;">{{ error }}</p>
+                {% endif %}
+            </form>
+            
+        </div>
+        
+    </div>
+
+   
+  
+</body>
+</html>

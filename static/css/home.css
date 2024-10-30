@@ -1,0 +1,32 @@
+/* Estilo para la pantalla de bienvenida */
+#welcome-screen {
+    text-align: center;
+    padding: 20px;
+}
+
+#welcome-screen h1 {
+    font-size: 36px;
+    color: #2C3E50;
+    margin-bottom: 20px;
+}
+
+#welcome-screen p {
+    font-size: 18px;
+    color: #e4e6e7;
+    margin-bottom: 40px;
+}
+
+#welcome-screen #start_button {
+    padding: 15px 30px;
+    background-color: #3498DB;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background-color 0.3s;
+}
+
+#welcome-screen #start_button:hover {
+    background-color: #2980B9;
+}

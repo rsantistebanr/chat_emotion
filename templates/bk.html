@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+</head>
+<body>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record" disabled>Stop Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById("start-record").addEventListener("click", async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                audioChunks = [];  // Reset chunks
+
+                // Enviar el audio al backend
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.wav');
+
+                fetch('/upload_audio', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => console.log(data.text))
+                .catch(error => console.error('Error:', error));
+            };
+
+            document.getElementById("stop-record").disabled = false;
+            document.getElementById("start-record").disabled = true;
+        });
+
+        document.getElementById("stop-record").addEventListener("click", () => {
+            mediaRecorder.stop();
+            document.getElementById("stop-record").disabled = true;
+            document.getElementById("start-record").disabled = false;
+        });
+    </script>
+</body>
+</html>

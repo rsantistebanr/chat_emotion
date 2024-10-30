@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
+<body>
+    <div id="chatbox" class="chatbox">
+        <!-- Cabecera del chat con título y flecha de retroceso -->
+        <div class="chat-header">
+            <div class="back-arrow">
+                <a href="/emotion_recognition"><</a> <!-- Icono de retroceso -->
+            </div>
+            <h3>CHAT con EMI</h3>
+        </div>
+
+        <!-- Sección de mensajes -->
+        <div id="messages" class="chat-messages">
+            {% set FECHA_GRUPO = None %}
+            {% for mensaje in mensajes_anteriores %}
+               <!--  {% set FECHA_ITEM = mensaje.fecha %}
+                {% if FECHA_ITEM != FECHA_GRUPO  %}
+                    {% set FECHA_GRUPO = FECHA_ITEM %}
+                    <div class="date-separator">
+                        <span>{{ FECHA_GRUPO}}</span>
+                    </div>
+                    
+                {% endif %} -->
+            
+                <div class="container_mensaje_user">
+                    {% if mensaje.tipo == 0 %}
+                        <!-- Mensaje del usuario -->
+                        <div class="message user">
+                            <div>{{ mensaje.mensaje }}</div>
+                            <span class="hora">{{ mensaje.hora }}</span>
+                        </div>
+                        <img class="iconoChat user" src="/static/images/icono_usuario2.png" alt="ChatUser" />
+                    {% else %}
+                        <!-- Mensaje del bot -->
+                        <img class="iconoChat bot" src="/static/images/logoGrande.png" alt="ChatBot" />
+                        <div class="message bot">
+                            <div>{{ mensaje.mensaje }}</div>
+                            <span class="hora">{{ mensaje.hora }}</span>
+                        </div>
+                    {% endif %}
+                   
+                </div>
+            {% endfor %}
+            
+                {% if user %}
+                <div class="container_mensaje_user"> 
+                    <img class="iconoChat user" src="/static/images/logoGrande.png" alt="ChatUser">   
+                    {% if mesajeInicial !='' %}
+                        <div class="message bot">{{mesajeInicial}}</div> 
+                    {% else %}
+                        <div class="message bot">Hola {{user}} mucho gusto, en que te puedo ayudar hoy</div> 
+                    {% endif%}
+
+                </div>
+                {% endif %}
+            <!-- Aquí aparecerán los mensajes -->
+        </div>
+
+        <!-- Campo de entrada para el usuario -->
+        <div class="input-container">
+            <input type="text" id="user_input" placeholder="Escribe aquí...">
+            <button id="mic_button" class="mic-button">🎤</button> <!-- Botón de micrófono -->
+            <button id="send_button" class="send-button">➤</button> <!-- Botón de enviar -->
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

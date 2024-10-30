@@ -1,0 +1,9 @@
+.env
+# Ignorar archivos y carpetas de Python
+#permite ignorar archivos de inicializacion
+__pycache__/ 
+
+#permite ignorar archivos bitcode que no son neecsarios en prod ya que los crea nuevamente
+*.py[cod]
+#evita que importemos las librerias, puesto que en prod se debe usar el requirements.txt
+venv/

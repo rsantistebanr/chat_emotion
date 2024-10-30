@@ -1,0 +1,80 @@
+.chatbox{
+    background-color: #5a6693;
+}
+/* Estilos generales del formulario */
+form {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+/* Estilo de cada campo de entrada */
+form input[type="text"],
+form input[type="number"],
+form input[type="password"],
+select{
+    width: 90%;
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    outline: none;
+    font-size: 16px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+    box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+form input[type="text"]:focus,
+form input[type="number"]:focus,
+form input[type="password"]:focus ,
+select:focus{
+    border-color: #4A90E2;
+    box-shadow: 0px 0px 8px rgba(74, 144, 226, 0.3);
+}
+
+/* Estilo del botón de enviar */
+form button[type="submit"] {
+    width: 100%;
+    padding: 15px;
+    margin-top: 20px;
+    background-color: #4A90E2;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button[type="submit"]:hover {
+    background-color: #357ABD;
+}
+
+form button[type="submit"]:active {
+    background-color: #2C5F95;
+}
+
+/* Estilos adicionales para dispositivos móviles */
+@media (max-width: 600px) {
+    form {
+        padding: 15px;
+    }
+
+    form input[type="text"],
+    form input[type="number"],
+    form input[type="password"] {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    form button[type="submit"] {
+        padding: 12px;
+        font-size: 14px;
+    }
+}

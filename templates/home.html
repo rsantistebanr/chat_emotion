@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+</head>
+<body>
+    <div class="chatbox">
+
+        <div id="welcome-screen">
+            <h1>BIENVENIDO</h1>
+            <p>Hola <span id="nombre_usuario">NOMBRE</span>, soy Emi, tu chatbot de ayuda emocional</p>
+            <button id="start_button">Empezar</button>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById("start_button").addEventListener("click", function() {
+            window.location.href = "/login";
+        });
+    </script>
+</body>
+</html>

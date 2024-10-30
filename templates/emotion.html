@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconocimiento de Emociones</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/emotion.css') }}">
+    <script src="{{ url_for('static', filename='js/face-api.min.js') }}"></script>
+</head>
+<style>
+
+    video {
+        position: relative;
+        z-index: 1;
+    }
+
+    canvas {
+        position: relative;
+        z-index: 20;
+    }
+</style>
+<body>
+    <div id="chatbox" class="chatbox">
+        <div class="back-arrow">
+            <a href="/login"><</a> <!-- Icono de retroceso -->
+        </div>
+        <div id="emotion-screen" class="center-screen ">
+            
+            <div class="content">
+                <h2 id="main-title">¿Deseas activar la cámara para reconocer tu emoción?</h2>
+                <!-- Título principal que será ocultado al presionar "Sí" -->
+    
+                <!-- Imagen del chatbot -->
+                <div class="bot-image">
+                    <img src="{{ url_for('static', filename='images/logoGrande.png') }}" alt="Chatbot" />
+                </div>
+    
+                <!-- Botones "Sí" y "No" -->
+                <div class="buttons" id="buttons">
+                    <a href="/webcam" class="button-yes" >Si</a>
+                    <a href="/chat2" class="button-no">No</a>
+                </div>
+    
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const MODEL_URL = "{{ url_for('static', filename='models') }}";
+    </script>
+    
+    <script>
+        let videoStream = null;
+        let userName = "{{ session['user'] }}";  // Nombre del usuario guardado en la sesión
+
+         function activateCamera() {
+            // Ocultar los botones y el título principal
+            document.getElementById('main-title').style.display = 'none';
+            document.getElementById('buttons').style.display = 'none';
+
+            // Mostrar el contenedor del video y título "Reconociendo tu emoción..."
+            document.getElementById('cameraContainer').style.display = 'block';
+
+            // Verificar si el navegador soporta el uso de la cámara
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    videoStream = stream;
+                    var video = document.getElementById('inputVideo');
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("Error al acceder a la cámara: " + err);
+                });
+            } else {
+                alert("Tu navegador no soporta el acceso a la cámara");
+            }
+        }
+
+        function stopCapture() {
+            // Detener el stream de la cámara
+            if (videoStream) {
+                let tracks = videoStream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+
+            // Capturar una imagen del video y enviarla al backend
+            captureImage();
+        }
+            
+
+        function goToChat() {
+            // Redirigir al chat
+            window.location.href = '/chat';
+        }
+
+        function declineCamera() {
+            // Si el usuario no desea activar la cámara, ir directamente al chat
+            window.location.href = '/chat';
+        }
+    </script>
+
+ <!-- Incluye el archivo test_model.js antes de webcam.js -->
+
+<script src="{{ url_for('static', filename='js/script_webcam.js') }}"></script>
+
+</body>
+</html>

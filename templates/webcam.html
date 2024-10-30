@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconocimiento de Emociones</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/emotion.css') }}">
+    <script src="{{ url_for('static', filename='js/face-api.min.js') }}"></script>
+</head>
+<style>
+
+    video {
+        position: relative;
+        z-index: 0;
+    }
+
+    canvas {
+        position: absolute;
+        z-index: 20;
+    }
+</style>
+<body>
+    <div id="chatbox" class="chatbox">
+        <div class="back-arrow">
+            <a href="/login"><</a> <!-- Icono de retroceso -->
+        </div>
+        <div id="emotion-screen" class="center-screen ">
+            
+            <div class="content">
+                <h3 id="main-title">Mira fijamente para realizar el escaneo</h3>
+                <!-- Título principal que será ocultado al presionar "Sí" -->
+    
+                <!-- Contenedor del video que aparecerá al presionar "Sí" -->
+                <div id="cameraContainer" style="display:none;">
+                    <video onloadedmetadata="onPlay(this)" id="inputVideo" autoplay muted playsinline></video>
+                    <canvas id="overlay">
+                    
+                </div>
+                <h2>Reconociendo tu emoción...</h2>
+                <!-- <video id="videoElement" width="320" height="240" autoplay></video> -->
+                <button id="stopButton" onclick="stopCapture()">Detener captura</button>
+                <button id="repetir" onclick="repetir()" disabled>Repetir</button>
+                <!-- Mensaje de emoción detectada, interfaz basada en la imagen que proporcionaste -->
+                <div id="emotionMessage" style="display:none;">
+                    <div class="emotion-container">
+                        <h2 id="emotionText"></h2>
+                        <div class="chatbot-section"  >
+                            <p id="question" style="display:none;"></p>
+                        </div>
+                        <input type="hidden"  id="emotionInputHidden" value="">
+                        <a href="/chat" id="goToChat" onclick="sendEmotion()">Ir a chatear</a>
+                    </div>
+                </div> 
+            </div>
+        </div>
+    </div>
+    <!-- <div style="position: relative">
+        <video onloadedmetadata="onPlay(this)" id="inputVideo" autoplay muted playsinline></video>
+        <canvas id="overlay">
+    </div> -->
+
+    <!-- <script src="./public/js/script_webcam.js"></script> -->
+    <script>
+        const MODEL_URL = "{{ url_for('static', filename='models') }}";
+    </script>
+    
+    <script>
+        let videoStream = null;
+        let userName = "{{ session['user'] }}";  // Nombre del usuario guardado en la sesión
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ocultar los botones y el título principal
+            // Mostrar el contenedor del video y título "Reconociendo tu emoción..."
+            document.getElementById('cameraContainer').style.display = 'block';
+
+            // Verificar si el navegador soporta el uso de la cámara
+            /* if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    videoStream = stream;
+                    var video = document.getElementById('inputVideo');
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("Error al acceder a la cámara: " + err);
+                });
+            } else {
+                alert("Tu navegador no soporta el acceso a la cámara");
+            } */
+        });
+    
+
+     
+        function goToChat() {
+            // Redirigir al chat
+            window.location.href = '/chat';
+        }
+
+        function declineCamera() {
+            // Si el usuario no desea activar la cámara, ir directamente al chat
+            window.location.href = '/chat';
+        }
+    </script>
+
+ <!-- Incluye el archivo test_model.js antes de webcam.js -->
+
+<script src="{{ url_for('static', filename='js/script_webcam.js') }}"></script>
+
+</body>
+</html>

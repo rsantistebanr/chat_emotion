@@ -1,0 +1,81 @@
+/* Estilo para la pantalla de ingreso de datos */
+h3{
+    padding: 0;
+    margin: 5px 0;
+}
+
+#login-screen {
+    text-align: center;
+}
+img{
+    width: 100%;
+    height: 100%;
+}
+.image_logo_home{
+    display: block;
+    margin: 0px auto;
+    width: 150px;
+    height: 150px;
+}
+.botones_superiores{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#login-screen h2 {
+    font-size: 28px;
+    color: #2C3E50;
+    margin-bottom: 30px;
+}
+
+#login-screen form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#login-screen input {
+    width: 80%;
+    max-width: 300px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #BDC3C7;
+    border-radius: 25px;
+    font-size: 16px;
+}
+
+#login-screen button {
+    padding: 10px 20px;
+    width: 150px;
+    background-color: #1c2135;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: .9em;
+    transition: #f0f0f2  0.3s ;
+}
+.botones_superiores a{
+    padding: 10px 20px;
+    width: 150px;
+    background-color: #1c2135;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: .7em;
+    transition: #f0f0f2  0.3s ;
+}
+
+#login-screen button:hover {
+    background-color: #c3c6d3;
+    color: #000;
+}
+.welcome-screen p{
+    color: #1e1e1e;
+}
+.licencia{
+    max-width: 60px;
+}
+/* Estilos para pantallas pequeñas (móviles) */

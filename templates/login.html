@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+    <div id="login-screen" class="chatbox fondo">
+        <div class="botones_superiores">
+            <a target="_blank" href="https://www.canva.com/design/DAGTyXx00OI/tVYAbvVl-9gb16RPfmExQQ/edit?utm_content=DAGTyXx00OI&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton">BITÁCORA EMOCIONAL</a>
+            <a target="_blank" href="https://www.canva.com/design/DAGUcQfb3G4/luauTchFsbnHNMhA68_poA/edit?utm_content=DAGUcQfb3G4&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton">EVIDENCIAS</a>
+        </div>
+        <div class="welcome-screen">
+            <h1>BIENVENIDO</h1>
+            <div class="image_logo_home">
+                <img src="{{ url_for('static', filename='images/logoGrande.png') }}" alt="logoaqui">
+            </div>
+            <p>Hola soy Emi, tu chatbot de ayuda emocional</p>
+        </div>
+        <h3>Iniciar Sesión</h3>
+        <form action="/login" method="POST">
+            <input type="text" name="user" placeholder="Usuario" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <button type="submit">INGRESAR</button>
+        </form>
+        <p>¿No tienes una cuenta? <a href="/register" style="color: blue;">Regístrate aquí</a></p>
+        <a  class="licencia" href="https://www.canva.com/design/DAGVDOpNphE/8HiYl6SVypREnx44GYxvEA/edit"  target="_blank">
+            <img src="{{ url_for('static', filename='images/icono_licencia.png') }}" alt="licencia_chat_emi">
+        </a>
+
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+    </div>
+   
+</body>
+</html>

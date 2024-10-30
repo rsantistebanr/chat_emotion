@@ -1,0 +1,122 @@
+/* Centrar todo el contenido de la pantalla */
+.center-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.chatbox{
+    background-color: #a8b2d4;
+}
+
+a{
+    padding: 10px 20px;
+    width: 150px;
+    background-color: #1c2135;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: .7em;
+    transition: #f0f0f2  0.3s ;
+}
+
+/* Botones de elección */
+.button-yes, .button-no {
+    padding: 15px 30px;
+    margin: 10px;
+    font-size: 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+#chatButton{
+    padding: 12px;
+    margin: 10px;
+    font-size: .8em;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+
+.button-yes, #chatButton{
+    background-color: #4CAF50;
+    color: white;
+}
+
+.button-yes:hover {
+    background-color: #45A049;
+}
+
+.button-no {
+    background-color: #F44336;
+    color: white;
+}
+
+.button-no:hover {
+    background-color: #D32F2F;
+}
+
+/* Imagen del chatbot */
+.bot-image img {
+    width: 150px;  /* Ajusta el tamaño de la imagen según lo necesites */
+    margin-bottom: 20px;
+}
+
+/* Contenedor del video y botón de detener */
+#cameraContainer {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#stopButton  {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #FF0000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+#repetir  {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #1d5cee;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#stopButton:hover {
+    background-color: #D32F2F;
+}
+
+#cameraContainer{
+    max-width: 400px;
+    position: relative;
+}
+#overlay{
+    max-width: 400px;
+    top: 0;
+    left: 0;
+}
+video {
+    border: 2px solid #ddd;
+    max-width: 400px;
+    border-radius: 10px;
+}
+
+/* ############################################################### */
+/* General container for the chat */
+
+
+
+
+
