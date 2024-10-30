@@ -7,3 +7,5 @@ __pycache__/
 *.py[cod]
 #evita que importemos las librerias, puesto que en prod se debe usar el requirements.txt
 venv/
+pyvenv.cfg
+Lib/
