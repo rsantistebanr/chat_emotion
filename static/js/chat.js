@@ -1,6 +1,7 @@
     // static/js/chat.js
+    let socket;
     document.addEventListener('DOMContentLoaded', function() {
-        var socket = io();
+        let socket = io();
         
         var sendButton = document.getElementById('send_button');
         var userInput = document.getElementById('user_input');
@@ -140,7 +141,12 @@
     });
 
 
-
+    window.addEventListener('beforeunload', function() {
+        if (socket) {
+            socket.disconnect();  // Cierra la conexión de Socket.IO
+            console.log("Conexión de Socket.IO cerrada");
+        }
+    });
 
 
 

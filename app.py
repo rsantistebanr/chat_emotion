@@ -16,6 +16,7 @@ from flask import session, redirect, url_for
 from datetime import datetime , timedelta # Importa el módulo datetime
 import re
 
+
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
 
@@ -313,20 +314,24 @@ def handle_message(data):
         if respuestaEspañol == '':
             print('respeusta del PNL: ')
                
-            #try:
-            bot_reply = procesamientoNPL(promt)
-            respuestaEspañol = traducir_español(bot_reply)
-            print('bot_reply: ', bot_reply)
-            print('respuestaEspañol: ', respuestaEspañol)
-            #bot_reply = "MENSAJE DEL CHAT" #response['choices'][0]['text'].strip()
+            try:
+                bot_reply = procesamientoNPL(promt)
+                respuestaEspañol = traducir_español(bot_reply)
+                print('bot_reply: ', bot_reply)
+                print('respuestaEspañol: ', respuestaEspañol)
+                #bot_reply = "MENSAJE DEL CHAT" #response['choices'][0]['text'].strip()
 
-            # Convertir la respuesta del bot en audio usando gTTS
-            ''' tts = gTTS(text=respuestaEspañol, lang='es')
-            audio_filename = f"static/audio/response_{respuestaEspañol[:10]}.mp3"
-            tts.save(audio_filename)
-            guardarMensaje(respuestaEspañol,user, 1)'''
-            # Enviar la respuesta y la URL del archivo de audio
-            
+                # Convertir la respuesta del bot en audio usando gTTS
+                ''' tts = gTTS(text=respuestaEspañol, lang='es')
+                audio_filename = f"static/audio/response_{respuestaEspañol[:10]}.mp3"
+                tts.save(audio_filename)
+                guardarMensaje(respuestaEspañol,user, 1)'''
+                # Enviar la respuesta y la URL del archivo de audio
+            except Exception as e:
+                respuestaEspañol = 'No pude procesar la respuesta. Intentemos nuevamente'
+                audio_filename = None
+                links = []
+                emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename ,'links':links})
             # emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
             """ except ValueError:
                 respuestaEspañol = 'No pude procesar la respuesta. Intentemos nuevamente'
@@ -543,7 +548,10 @@ def retornarMensasjeInicial(emotion, user):
 
 
 
-
+# Manejar la desconexión
+@socketio.on('disconnect')
+def handle_disconnect():
+    print("Cliente desconectado")
 
 
 def generearRespuestaSeleccion(emocion, promt):
