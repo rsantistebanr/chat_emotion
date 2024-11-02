@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, jsonify
 import speech_recognition as sr
 from gtts import gTTS
-from playsound import playsound
+""" from playsound import playsound """
 import os
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
@@ -15,7 +15,7 @@ from flask_pymongo import PyMongo
 from flask import session, redirect, url_for
 from datetime import datetime , timedelta # Importa el módulo datetime
 import re
-from pydub.utils import which
+""" from pydub.utils import which """
 
 
 # Cargar las variables de entorno desde el archivo .env
