@@ -1,7 +1,10 @@
     // static/js/chat.js
     let socket;
     document.addEventListener('DOMContentLoaded', function() {
-        let socket = io();
+        if (!socket) {
+            socket = io();  // Solo asigna si `socket` no está definido
+        }
+        /* socketio = SocketIO(app, ping_timeout=30, ping_interval=10) */
         
         var sendButton = document.getElementById('send_button');
         var userInput = document.getElementById('user_input');
@@ -88,56 +91,92 @@
             </div>
         `;
             messagesDiv.innerHTML += htmlContent
-            
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             // Reproducir el archivo de audio de la respuesta si está disponible
             if (audioUrl) {
                 var audio = new Audio(audioUrl);
-                /* audio.stop();//pausar el anterior */
                 audio.play();
             }
         });
-        /* Audio.prototype.stop = function() {
-            this.pause();          // Pausa el audio
-            this.currentTime = 0;  // Reinicia el audio al inicio
-        }; */
+    
+
+
+
+
+
+
+
+
+
         // Grabar y enviar audio mediante el botón de micrófono
-        micButton.addEventListener('click', function() {
-            if (!isRecording) {
-                navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(stream => {
-                        mediaRecorder = new MediaRecorder(stream);
-                        mediaRecorder.start();
-                        isRecording = true;
-                        micButton.innerHTML = '🔴';  // Cambia el icono cuando está grabando
-                        userInput.value = '';  // Limpia el input de texto
-                        userInput.disabled = true;  // Deshabilita el campo de texto
-
-                        mediaRecorder.ondataavailable = function(event) {
-                            audioChunks.push(event.data);
-                        };
-
-                        mediaRecorder.onstop = function() {
-                            var audioBlob = new Blob(audioChunks, { 'type': 'audio/webm' });
-                            audioChunks = [];
-                            
-                            // Crear un objeto URL para mostrar el audio en el chat
-                            var audioUrl = URL.createObjectURL(audioBlob);
-                            messagesDiv.innerHTML += `<div class="container_mensaje_user"><div class="message user"><audio controls><source src="${audioUrl}" type="audio/webm"></audio></div><img class="iconoChat user" src="/static/images/icono_usuario.png" alt="ChatUser" /></div>`;
-                            
-                            // Envía el audio grabado al servidor a través de socket para conversión
-                            socket.emit('audio_message', audioBlob);
-                            showTypingIndicator();  // Muestra el indicador de "escribiendo..."
-                            userInput.disabled = false;  // Habilita el campo de texto nuevamente
-                        };
-                    });
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                micButton.innerHTML = '🎤';  // Cambia el icono de nuevo al micrófono
-            }
-        });
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("Lo siento, tu navegador no soporta la API de Web Speech");
+          } else {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = "es-ES"; // Configura el idioma
+            recognition.interimResults = false; // Solo resultados finales
+            recognition.maxAlternatives = 1;
+          
+            // Evento al hacer clic en el botón del micrófono
+            micButton.addEventListener('click', function() {
+              if (!isRecording) {
+                try {
+                  recognition.start(); // Intenta iniciar el reconocimiento
+                  isRecording = true;
+                  micButton.innerHTML = '🔴'; // Cambia el icono cuando está grabando
+                  userInput.value = ''; // Limpia el input de texto
+                  userInput.disabled = true; // Deshabilita el campo de texto
+                } catch (error) {
+                  console.error("Error al iniciar el reconocimiento de voz: ", error);
+                }
+              } else {
+                try {
+                  recognition.stop(); // Intenta detener el reconocimiento
+                  isRecording = false;
+                  micButton.innerHTML = '🎤'; // Cambia el icono de nuevo al micrófono
+                  userInput.disabled = false; // Habilita el campo de texto
+                } catch (error) {
+                  console.error("Error al detener el reconocimiento de voz: ", error);
+                }
+              }
+            });
+          
+            // Evento que se dispara cuando se reconoce el audio
+            recognition.onresult = (event) => {
+              const transcript = event.results[0][0].transcript;
+              
+              // Mostrar el texto transcrito en el chat (simulando un mensaje del usuario)
+              messagesDiv.innerHTML += `<div class="container_mensaje_user">
+                                          <div class="message user">${transcript}</div>
+                                          <img class="iconoChat user" src="/static/images/icono_usuario.png" alt="ChatUser" />
+                                        </div>`;
+          
+              // Envía el texto transcrito al servidor a través del socket
+              socket.emit('message',  {'message': transcript});
+              
+              // Muestra el indicador de "escribiendo..."
+              showTypingIndicator();
+            };
+          
+            // Maneja errores
+            recognition.onerror = (event) => {
+              console.error("Error de reconocimiento de voz: ", event.error);
+              if (event.error === "aborted" || event.error === "not-allowed") {
+                isRecording = false; // Reinicia el estado si el reconocimiento es abortado o no permitido
+                micButton.innerHTML = '🎤'; // Cambia el icono de nuevo al micrófono
+                userInput.disabled = false; // Habilita el campo de texto
+              }
+            };
+          
+            // Evento que se dispara cuando el reconocimiento de voz termina
+            recognition.onend = () => {
+              console.log("Reconocimiento de voz finalizado");
+              isRecording = false;
+              micButton.innerHTML = '🎤'; // Cambia el icono de nuevo al micrófono
+              userInput.disabled = false; // Habilita el campo de texto
+            };
+          }
     });
 
 

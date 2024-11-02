@@ -58,14 +58,14 @@
                     <img class="iconoChat user" src="/static/images/logoGrande.png" alt="ChatUser">   
                     {% if mesajeInicial !='' %}
                         <div class="message bot">{{mesajeInicial}}
-                            {% if alternativas !=None %}
-                            <p>Aqui te dejo algunas causas posibles:</p>
-                                <ul>
-                            {%for alternativa in alternativas %}
-                            
-                                    <li>{{alternativa}}</li>
-                            {% endfor%}
-                                </ul>
+                            {% if alternativas != None %}
+                                <p>Aqui te dejo algunas causas posibles:</p>
+                                    <ul>
+                                {%for alternativa in alternativas %}
+                                
+                                        <li>{{alternativa}}</li>
+                                {% endfor%}
+                                    </ul>
                             {% endif%} 
                         </div> 
                     {% else %}

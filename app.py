@@ -241,13 +241,17 @@ def EmotionSend():
 
 @app.route('/chat2', methods=['GET']) #para NO
 def chatNo():
+    alternativas = None
     if 'user' in session:
         user = session['user']
-        mesajeInicial = ''
+        user = session['user']
+        user = session['user']
+        mesajeInicial = '¿Hola en qué te puedo ayudar hoy?'
         fecha_hoy =  datetime.now().strftime("%Y-%m-%d")
         fecha_ayer = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
         mesajeInicial, alternativas = retornarMensasjeInicial(emotion='neutral', user=user)
-
+        print('alternativas2: ',alternativas)
+            
         # Consultar mensajes de hoy y de ayer en MongoDB para el usuario actual
         mensajes_anteriores = list(mongo.db.mensajes.find({
             "fecha": {"$in": [fecha_hoy, fecha_ayer]},
@@ -255,7 +259,8 @@ def chatNo():
         }).sort("fecha", 1).sort("hora", 1))
 
         # Renderizar el chat con los mensajes del día anterior y el mensaje de bienvenida
-        return render_template('chat.html', user=user, mensajes_anteriores=mensajes_anteriores, mesajeInicial = mesajeInicial[0], alternativas = None )
+        print('mesajeInicial: ',mesajeInicial)
+        return render_template('chat.html', user=user, mensajes_anteriores=mensajes_anteriores, mesajeInicial = mesajeInicial, alternativas = alternativas )
     else:
         return redirect(url_for('login'))
 
@@ -264,11 +269,11 @@ def chat():
     alternativas = []
     if 'user' in session:
         user = session['user']
-        mesajeInicial = ''
+        mesajeInicial = 'Hola, mucho gusto. Espero estés teniendo un buen día. Dime, ¿En qué te puedo ayudar?'
         emotion = session.get('emotion')
         if emotion:
             mesajeInicial, alternativas = retornarMensasjeInicial(emotion=emotion, user=user)
-
+        
         # Obtener la fecha de hoy y de ayer
         fecha_hoy =  datetime.now().strftime("%Y-%m-%d")
         fecha_ayer = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -278,8 +283,8 @@ def chat():
             "fecha": {"$in": [fecha_hoy, fecha_ayer]},
             "user": user
         }).sort("fecha", 1).sort("hora", 1))
-
         # Renderizar el chat con los mensajes del día anterior y el mensaje de bienvenida
+        print('Holaa')
         return render_template('chat.html', user=user, mensajes_anteriores=mensajes_anteriores, mesajeInicial = mesajeInicial , alternativas= alternativas)
     else:
         return redirect(url_for('register'))
@@ -294,6 +299,7 @@ def handle_message(data):
     respuestaEspañol = 'No entendi tu pregunta, vuelve a realizarla por favor.'
     user_message = data['message']
     user = session['user']
+    print('user_message: ',user_message)
     try:
         guardarMensaje(user_message,user, 0)
         #guardo el promt del chat
@@ -307,18 +313,11 @@ def handle_message(data):
         else:
             respuestaEspañol, links =  generearRespuestaSeleccion(emocion, user_message) 
             #guardarMensaje(respuestaEspañol,user, 1)
-            print(" len links: ", len(links))
-            print(" lista links: ", links)
-            print('respuestaEspañol: ',respuestaEspañol) 
 
         if respuestaEspañol == '':
-            print('respeusta del PNL: ')
-               
             try:
                 bot_reply = procesamientoNPL(promt)
                 respuestaEspañol = traducir_español(bot_reply)
-                print('bot_reply: ', bot_reply)
-                print('respuestaEspañol: ', respuestaEspañol)
                 #bot_reply = "MENSAJE DEL CHAT" #response['choices'][0]['text'].strip()
 
                 # Convertir la respuesta del bot en audio usando gTTS
@@ -384,14 +383,11 @@ def handle_audio_message(audio_data):
         # Respuesta del bot
         user = session.get('user', 'user')
         emocion = session['emotion']
-        print('pasooo: ', emocion)
         guardarMensaje(user_message,user, 1) #GUARDAMOS LA PREGUNTA
-        print('pasoiiii')
 
         if user_message !='' and user_message != None:
             emocion = session['emotion']
             if emocion == 'sad' and 'GRACIAS' in user_message.upper():
-                print('pasooo')
                 respuestaEspañol, links =  generearRespuestaSeleccion(emocion, user_message) 
                 guardarMensaje(respuestaEspañol,user, 1)#GUARDAMOS LA RESPUESTA
 
@@ -487,13 +483,12 @@ def dividir_texto_por_caracteres(texto, max_caracteres=490):
     fragmentos = [texto[i:i + max_caracteres] for i in range(0, len(texto), max_caracteres)]
     return fragmentos
 
-def convert_to_wav(audio_file, output_file):
+""" def convert_to_wav(audio_file, output_file):
     # Cargar el archivo de audio en cualquier formato
     sound = AudioSegment.from_file(audio_file)
     
     # Convertirlo a formato WAV
-    sound.export(output_file, format="wav")
-    #print(f"Archivo convertido guardado como: {output_file}")
+    sound.export(output_file, format="wav") """
 
 def guardarMensaje(promt,user, tipo):
     current_datetime = datetime.now()
@@ -518,9 +513,8 @@ def diaHoraActual():
 
 def retornarMensasjeInicial(emotion, user):
     saludo = f''' Hola {user}. ¿En qué te puedo ayudar hoy?.'''
-    mensajes = [ saludo]
+    mensajes = saludo
     alternativas = None
-    print("emotionemotion",emotion)
     mensajeInicialFeliz = [
         'Que bueno que te encuentres de buen estado anímico, continúa así, ¿Deseas que te ayude en alguna tarea o consejo académico?',
     ]
@@ -555,7 +549,6 @@ def handle_disconnect():
 
 
 def generearRespuestaSeleccion(emocion, promt):
-    print('pasoo generearRespuestaSeleccion')
     palabrasClave1 = []
     palabrasClave2 = []
     palabrasClave3 = []
@@ -565,27 +558,23 @@ def generearRespuestaSeleccion(emocion, promt):
         PalabrasClave = ['academica,pregunta academica,consulta academicam,Te consultare una cosa sobre'] #consulta academica
     elif emocion == 'sad':
         opcion = '0'
-        palabrasClave1 = ["ANSIOS", "ANSIEDAD", "ME SIENTO ANSIOS"]
-        palabrasClave2 = ["ESTRESAD", "TRISTE Y ESTRESAD", "ESTRÉS", "ESTRES", "CARGA ACADEMICA", "FALTA DE TIEMPO"]
-        palabrasClave3 = ["PROBLEMAS FAMILIARES", "FAMILIA"]
+        palabrasClave1 = ["ANSIOS", "ANSIEDAD", "ME SIENTO ANSIOS" , "ANSI", "ANSIEDAD", "ANSIAS"]
+        palabrasClave2 = ["ESTRESAD", "TRISTE Y ESTRESAD", "ESTRÉS", "ESTRES", "CARGA ACADEMICA", "FALTA DE TIEMPO", "MUCHAS TAREAS", "DEMASIADA TAREA"]
+        palabrasClave3 = ["PROBLEMAS FAMILIARES", "FAMILIA", "DISCUCION"]
 
         for palabra in palabrasClave1:
-            print('palabra: ', palabra , "frase: ", promt)
             if re.search(palabra.lower(), promt.lower()):
                 opcion = '1'
-                print(f"La palabra '{palabra}' está parcialmente contenida en la frase.")
         if opcion == '0':
             for palabra in palabrasClave2:
                 print('palabra: ', palabra , "frase: ", promt)
                 if re.search(palabra.lower(), promt.lower()):
                     opcion = '2'
-                    print(f"La palabra '{palabra}' está parcialmente contenida en la frase.")
         if opcion == '0':
              for palabra in palabrasClave3:
                 print('palabra: ', palabra , "frase: ", promt)
                 if re.search(palabra.lower(), promt.lower()):
                     opcion = '3'
-                    print(f"La palabra '{palabra}' está parcialmente contenida en la frase.") 
 
         print('opcion: ', opcion)
         if opcion == '1': 
@@ -660,9 +649,6 @@ def generearRespuestaSeleccion(emocion, promt):
             ]
             links =["https://www.youtube.com/watch?v=5x1v2l8OAnk&ab_channel=LosTitis-CuentosyCancionesdeMotivaci%C3%B3nInfantil "]
 
-    else: #neutro
-        respuesta = 'Respuesta para neutro'
-    print("RespuestasSadOp[0]; ",RespuestasSadOp[0])
     
     return RespuestasSadOp[0], links
 

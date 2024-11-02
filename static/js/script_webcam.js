@@ -53,12 +53,8 @@ function stopCapture() {
         tracks.forEach(track => track.stop());
         video.srcObject = null;  // Quitar el stream del elemento de video
         canvas.style.display = 'none'
-        console.log(resultado)
-        console.log(resultado[0])
-        console.log(resultado[0].expressions)
         expressions = resultado[0].expressions
         emocion = getDominantEmotion(expressions)
-        console.log('expresions: ',emocion.maxEmotion)
         if(emocion.maxEmotion == '' || emocion.maxEmotion ==null ){
              emocionDetectada.textContent = 'No pude reconocer tu emoción :c'
         } else  if (emocion.maxEmotion == 'neutral'){
@@ -121,7 +117,6 @@ async function onPlay() {
         .withFaceExpressions();
 
     const dims = faceapi.matchDimensions(canvas, video, true);
-    console.log(dims)
     const resizedResults = faceapi.resizeResults(fullFaceDescriptions, dims);
     resultado = resizedResults
     faceapi.draw.drawDetections(canvas, resizedResults);
