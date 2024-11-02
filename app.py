@@ -2,12 +2,12 @@
 from flask import Flask, render_template, request, jsonify
 import speech_recognition as sr
 from gtts import gTTS
-""" from playsound import playsound """
+
 import os
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 from dotenv import load_dotenv
-""" from pydub import AudioSegment """
+
 from huggingface_hub import InferenceClient
 from translate import Translator
 import base64
@@ -15,7 +15,6 @@ from flask_pymongo import PyMongo
 from flask import session, redirect, url_for
 from datetime import datetime , timedelta # Importa el módulo datetime
 import re
-""" from pydub.utils import which """
 
 
 # Cargar las variables de entorno desde el archivo .env
@@ -262,6 +261,7 @@ def chatNo():
 
 @app.route('/chat', methods=['GET']) #para si
 def chat():
+    alternativas = []
     if 'user' in session:
         user = session['user']
         mesajeInicial = ''
@@ -301,12 +301,6 @@ def handle_message(data):
         #hacemos el proceso de finituning
         user = session.get('user', 'user')
         emocion = session['emotion']
-        print('pasooo: ', emocion)
-
-        """ if user_message !='' and user_message != None:
-            emocion = session['emotion']
-            if emocion == 'sad': # and 'GRACIAS' in user_message.upper():
-                print('pasooo33') """
 
         if re.search('gracia'.lower(), user_message.lower()):  #verificamos que pregunta posible esta llegando:
             respuestaEspañol = 'Me alegra haberte ayudado.'
