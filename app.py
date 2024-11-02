@@ -7,7 +7,7 @@ import os
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 from dotenv import load_dotenv
-from pydub import AudioSegment
+""" from pydub import AudioSegment """
 from huggingface_hub import InferenceClient
 from translate import Translator
 import base64
