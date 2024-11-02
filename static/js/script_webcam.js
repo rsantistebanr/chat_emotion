@@ -65,10 +65,17 @@ function stopCapture() {
             emotionInputHidden.value = emocion.maxEmotion
             emocionDetectada.textContent = 'Tu rostro demuestra una estado neutral, no se distingue una emoción.'
         }else{
-            emocionDetectada.textContent = 'Puedo ver que estas '+emocion.maxEmotion 
-            emotionInputHidden.value = emocion.maxEmotion
+           
+           emotionInputHidden.value += emocion.maxEmotion
+           if (emocion.maxEmotion  == 'happy') {
+            emocionDetectada.textContent = 'Puedo ver que estás feliz'
+           }
+           else if(emocion.maxEmotion  == 'sad'){
+            emocionDetectada.textContent = 'Puedo ver que estás triste'   
+           }else{
+            emocionDetectada.textContent = '¿Por qué te sientes así?'   
+           }
             question.textContent = '¿Te parece si me cuentas un poco ...?'
-
         }
         emotionMessage.style.display='block'
         question.style.display='block'

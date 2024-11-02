@@ -14,8 +14,9 @@ import base64
 from flask_pymongo import PyMongo
 from flask import session, redirect, url_for
 from datetime import datetime , timedelta # Importa el módulo datetime
-
+import re
 from pydub.utils import which
+
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
@@ -246,7 +247,8 @@ def chatNo():
         mesajeInicial = ''
         fecha_hoy =  datetime.now().strftime("%Y-%m-%d")
         fecha_ayer = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-        mesajeInicial = retornarMensasjeInicial(emotion='neutral', user=user)
+        mesajeInicial, alternativas = retornarMensasjeInicial(emotion='neutral', user=user)
+
         # Consultar mensajes de hoy y de ayer en MongoDB para el usuario actual
         mensajes_anteriores = list(mongo.db.mensajes.find({
             "fecha": {"$in": [fecha_hoy, fecha_ayer]},
@@ -254,7 +256,7 @@ def chatNo():
         }).sort("fecha", 1).sort("hora", 1))
 
         # Renderizar el chat con los mensajes del día anterior y el mensaje de bienvenida
-        return render_template('chat.html', user=user, mensajes_anteriores=mensajes_anteriores, mesajeInicial = mesajeInicial )
+        return render_template('chat.html', user=user, mensajes_anteriores=mensajes_anteriores, mesajeInicial = mesajeInicial[0], alternativas = None )
     else:
         return redirect(url_for('login'))
 
@@ -265,7 +267,7 @@ def chat():
         mesajeInicial = ''
         emotion = session.get('emotion')
         if emotion:
-            mesajeInicial = retornarMensasjeInicial(emotion=emotion, user=user)
+            mesajeInicial, alternativas = retornarMensasjeInicial(emotion=emotion, user=user)
 
         # Obtener la fecha de hoy y de ayer
         fecha_hoy =  datetime.now().strftime("%Y-%m-%d")
@@ -278,7 +280,7 @@ def chat():
         }).sort("fecha", 1).sort("hora", 1))
 
         # Renderizar el chat con los mensajes del día anterior y el mensaje de bienvenida
-        return render_template('chat.html', user=user, mensajes_anteriores=mensajes_anteriores, mesajeInicial = mesajeInicial )
+        return render_template('chat.html', user=user, mensajes_anteriores=mensajes_anteriores, mesajeInicial = mesajeInicial , alternativas= alternativas)
     else:
         return redirect(url_for('register'))
 
@@ -288,33 +290,75 @@ def chat():
 ################################################################
 @socketio.on('message')
 def handle_message(data):
+    links = []
+    respuestaEspañol = 'No entendi tu pregunta, vuelve a realizarla por favor.'
     user_message = data['message']
     user = session['user']
-    # Llamar a la API de OpenAI para obtener la respuesta del modelo
-    #response = openai.Completion.create(    #    engine="text-davinci-003",    #    prompt=user_message,    #    max_tokens=150    #)
-
-    #guardo el promt del chat
-    promt = traducir("es", "en",user_message )
-
-    guardarMensaje(promt,user, 0)            
-   
-    bot_reply = procesamientoNPL(promt)
     try:
-        respuestaEspañol = traducir_español(bot_reply)
-        #bot_reply = "MENSAJE DEL CHAT" #response['choices'][0]['text'].strip()
+        guardarMensaje(user_message,user, 0)
+        #guardo el promt del chat
+        promt = traducir("es", "en",user_message )
+        #hacemos el proceso de finituning
+        user = session.get('user', 'user')
+        emocion = session['emotion']
+        print('pasooo: ', emocion)
 
-        # Convertir la respuesta del bot en audio usando gTTS
+        """ if user_message !='' and user_message != None:
+            emocion = session['emotion']
+            if emocion == 'sad': # and 'GRACIAS' in user_message.upper():
+                print('pasooo33') """
+
+        if re.search('gracia'.lower(), user_message.lower()):  #verificamos que pregunta posible esta llegando:
+            respuestaEspañol = 'Me alegra haberte ayudado.'
+        else:
+            respuestaEspañol, links =  generearRespuestaSeleccion(emocion, user_message) 
+            #guardarMensaje(respuestaEspañol,user, 1)
+            print(" len links: ", len(links))
+            print(" lista links: ", links)
+            print('respuestaEspañol: ',respuestaEspañol) 
+
+        if respuestaEspañol == '':
+            print('kskksoncl paso')
+               
+            try:
+                bot_reply = procesamientoNPL(promt)
+                respuestaEspañol = traducir_español(bot_reply)
+                #bot_reply = "MENSAJE DEL CHAT" #response['choices'][0]['text'].strip()
+
+                # Convertir la respuesta del bot en audio usando gTTS
+                ''' tts = gTTS(text=respuestaEspañol, lang='es')
+                audio_filename = f"static/audio/response_{respuestaEspañol[:10]}.mp3"
+                tts.save(audio_filename)
+                guardarMensaje(respuestaEspañol,user, 1)'''
+                # Enviar la respuesta y la URL del archivo de audio
+            
+            # emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
+            except ValueError:
+                respuestaEspañol = 'No pude procesar la respuesta. Intentemos nuevamente'
+                audio_filename = None
+                links = []
+                emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename, 'links':links})
+            except Exception as e:
+                respuestaEspañol = 'No pude procesar la respuesta. Intentemos nuevamente'
+                audio_filename = None
+                links = []
+                emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename ,'links':links})
+
+
         tts = gTTS(text=respuestaEspañol, lang='es')
-        audio_filename = f"static/audio/response_{user_message[:10]}.mp3"
+        audio_filename = f"static/audio/response_{respuestaEspañol[:10]}.mp3"
         tts.save(audio_filename)
         guardarMensaje(respuestaEspañol,user, 1)
-        # Enviar la respuesta y la URL del archivo de audio
-        emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
-    except ValueError:
-        emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
+        emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename, 'links':links})
     except Exception as e:
-        emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
+        respuestaEspañol = 'No pudimos procesar tu pregunta, intententemos nuevamente.'
+        audio_filename = None
+        links = []
+        emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename, 'links':links})
 
+    # Llamar a la API de OpenAI para obtener la respuesta del modelo
+    #response = openai.Completion.create(    #    engine="text-davinci-003",    #    prompt=user_message,    #    max_tokens=150    #)
+    
 
 @socketio.on('audio_message')
 def handle_audio_message(audio_data):
@@ -339,20 +383,37 @@ def handle_audio_message(audio_data):
 
         # Respuesta del bot
         user = session.get('user', 'user')
-        if user_message !='' and user_message != None:
-            guardarMensaje(user_message,user, 0)
+        emocion = session['emotion']
+        print('pasooo: ', emocion)
+        guardarMensaje(user_message,user, 1) #GUARDAMOS LA PREGUNTA
+        print('pasoiiii')
 
-        promt = traducir("es", "en", user_message)
-        bot_reply = procesamientoNPL(promt)
-        respuestaEspañol = traducir_español(bot_reply)
-        guardarMensaje(respuestaEspañol,user, 1)
-        audio_filename = f"static/audio/response_{timestamp}.mp3"
-        
-        # Genera el audio de la respuesta
-        tts = gTTS(text=respuestaEspañol, lang='es')
-        tts.save(audio_filename)
-        
-        emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
+        if user_message !='' and user_message != None:
+            emocion = session['emotion']
+            if emocion == 'sad' and 'GRACIAS' in user_message.upper():
+                print('pasooo')
+                respuestaEspañol, links =  generearRespuestaSeleccion(emocion, user_message) 
+                guardarMensaje(respuestaEspañol,user, 1)#GUARDAMOS LA RESPUESTA
+
+            elif  'GRACIAS' in user_message.upper():  #verificamos que pregunta posible esta llegando:
+                respuestaEspañol = 'Me alegra haberte ayudado. Si tienes alguna duda,no dudes en preguntarme.'
+                tts = gTTS(text=respuestaEspañol, lang='es')
+                audio_filename = f"static/audio/response_{respuestaEspañol[:10]}.mp3"
+                tts.save(audio_filename)
+                guardarMensaje(user_message,user, 1)
+                emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
+
+            else:
+                promt = traducir("es", "en", user_message)
+                bot_reply = procesamientoNPL(promt)
+                respuestaEspañol = traducir_español(bot_reply)
+                guardarMensaje(respuestaEspañol,user, 1)
+                audio_filename = f"static/audio/response_{timestamp}.mp3"
+                # Genera el audio de la respuesta
+                tts = gTTS(text=respuestaEspañol, lang='es')
+                tts.save(audio_filename)
+                
+                emit('bot_response', {'response': respuestaEspañol, 'audio_url': audio_filename})
     except Exception as e:
         emit('bot_response', {'response': f"Error en el procesamiento de audio: {e}", 'audio_url': None})
     finally:
@@ -368,7 +429,6 @@ def procesamientoNPL(promt):
         EDAD = int(usuario['age'])
         if EDAD < 13:
             if usuario['gender'] == 'Hombre':
-                #edad_genero = f''' Soy un niño de {EDAD} años, en base a eso da tu repuesta.'''
                 edad_genero = f'''I am a {EDAD} year old boy, based on that give your answer.'''
             else:
                 edad_genero = f'''I am a {EDAD} year old girl, based on that give your answer.'''
@@ -379,9 +439,10 @@ def procesamientoNPL(promt):
                 edad_genero = f'''I am a teenager of {EDAD} years old, based on that give your answer'''
         else:
             edad_genero =f'''I am a young man of {EDAD} years, based on that give your answer'''
+     
         #traducimos
         edad_genero += edad_genero + ".My name is " + user
-        adicionales = ["Maximum 300 words",edad_genero ] #Colocarlos en ingles
+        adicionales = ["Usa Maximum 80 words",edad_genero, "Finaliza con la pregunta ¿Tienes alguna duda?" ] #Colocarlos en ingles
         promt = promt + "." + adicionales[0] + "." +adicionales[1]
         #PROCESAMIENTO NL (PNL)
         client = InferenceClient(api_key=os.getenv("api_key"))
@@ -390,8 +451,8 @@ def procesamientoNPL(promt):
             #model="mistralai/Mistral-Nemo-Instruct-2407",
             model="mistralai/Mixtral-8x7B-Instruct-v0.1", 
             messages=[{"role": "user", "content": promt}],
-            max_tokens=600,
-            temperature=0.7,
+            max_tokens=500,
+            temperature=0.8,
             stream=True,
         ):
             respuestaModelo += message.choices[0].delta.content
@@ -447,6 +508,7 @@ def guardarMensaje(promt,user, tipo):
         "mensaje":promt,
         "tipo": tipo # 0:user - 1: bot
     }
+    print('se guardamensaje')
     mongo.db.mensajes.insert_one(nuevo_usuario)
 
 def diaHoraActual():
@@ -455,18 +517,175 @@ def diaHoraActual():
     return fechaHora_actual
 
 def retornarMensasjeInicial(emotion, user):
-    mensajeInicial = f''' Hola {user}. ¿En qué te puedo ayudar hoy?.'''
-
+    saludo = f''' Hola {user}. ¿En qué te puedo ayudar hoy?.'''
+    mensajes = [ saludo]
+    alternativas = None
+    print("emotionemotion",emotion)
+    mensajeInicialFeliz = [
+        'Que bueno que te encuentres de buen estado anímico, continúa así, ¿Deseas que te ayude en alguna tarea o consejo académico?',
+    ]
+    mensajeInicialSad = [
+        '¿Por qué crees que te sientes así? si me respondes de forma sincera, podré ayudarte de mejor manera y así puedas sentirte mejor.',
+    ]
     if emotion == 'happy':
-        mensajeInicial = f''' {user}, veo que estás feliz, eso es muy bueno, debes mantener ese buen estado de ánimo.  
-                            ¿Cuentáme en que te puedo ayudar?'''
+
+        mensajes = mensajeInicialFeliz[0]
+        alternativas  = None
+        
+
     elif emotion ==  'sad':
-        mensajeInicial = f'''¿Esa tristeza a que se debe?, cuéntame lo que te pasa para poder ayudarte, {user}.  
-                            ¿Cuentáme en que te puedo ayudar?.¿Talvez te cuento un chiste para que te alegres un poco, o un cuento corto?'''
+        alternativas  = ["Causa 1: Te sientes ansioso por los exámenes",
+                        "Causa 2: Tienes estrés por carga Académica o sientes que me falta Tiempo para terminar tus tareas",
+                        "Causa 3: ¿Algún problema familiar?"
+                        ]
+        mensajes = mensajeInicialSad[0]
+
+
     elif emotion == 'neutral':
         mensajeInicial = f'''Hola {user}. ¿En qué te puedo ayudar hoy?.  '''
     
-    return mensajeInicial
+    return mensajes, alternativas
+
+
+
+
+
+
+def generearRespuestaSeleccion(emocion, promt):
+    print('pasoo generearRespuestaSeleccion')
+    palabrasClave1 = []
+    palabrasClave2 = []
+    palabrasClave3 = []
+    RespuestasSadOp = [""]
+    links = []
+    if emocion == 'happy':
+        PalabrasClave = ['academica,pregunta academica,consulta academicam,Te consultare una cosa sobre'] #consulta academica
+    elif emocion == 'sad':
+        opcion = '0'
+        palabrasClave1 = ["ANSIOS", "ANSIEDAD", "ME SIENTO ANSIOS"]
+        palabrasClave2 = ["ESTRESAD", "TRISTE Y ESTRESAD", "ESTRÉS", "ESTRES", "CARGA ACADEMICA", "FALTA DE TIEMPO"]
+        palabrasClave3 = ["PROBLEMAS FAMILIARES", "FAMILIA"]
+
+        for palabra in palabrasClave1:
+            print('palabra: ', palabra , "frase: ", promt)
+            if re.search(palabra.lower(), promt.lower()):
+                opcion = '1'
+                print(f"La palabra '{palabra}' está parcialmente contenida en la frase.")
+        if opcion == '0':
+            for palabra in palabrasClave2:
+                print('palabra: ', palabra , "frase: ", promt)
+                if re.search(palabra.lower(), promt.lower()):
+                    opcion = '2'
+                    print(f"La palabra '{palabra}' está parcialmente contenida en la frase.")
+        if opcion == '0':
+             for palabra in palabrasClave3:
+                print('palabra: ', palabra , "frase: ", promt)
+                if re.search(palabra.lower(), promt.lower()):
+                    opcion = '3'
+                    print(f"La palabra '{palabra}' está parcialmente contenida en la frase.") 
+
+        print('opcion: ', opcion)
+        if opcion == '1': 
+            RespuestasSadOp = [ "La ansiedad por los exámenes es algo que muchos experimentamos, y hay técnicas que pueden ayudarte. Una de"+
+                " ellas es la ‘Visualización Positiva’. Antes del examen, cierra los ojos y visualiza cómo entras en la sala "+
+                " tranquilo, respondiendo las preguntas con confianza y sintiéndote aliviado al terminar. Repite esto varias veces"+
+                "   para preparar tu mente. Otra técnica es la Caja de Respiración: inhala contando hasta 4, mantén el aire por 4,"+
+                "     exhala por 4 y espera 4 antes de volver a inhalar. Esto calma tu sistema nervioso. También, asegúrate de dormir"+
+                "       bien antes del examen; el descanso es clave."
+                ,            
+                "El estrés por la escuela es normal. Si sientes que no puedes con todo, prueba esta técnica: respira profundo, "+
+                "sostén el aire por 4 segundos y exhala despacio. Esto te ayuda a calmar la mente. Divide las tareas en partes pequeñas " +
+                "y hazlas una por una. Usa un horario sencillo para organizarte y date descansos cortos para estirarte o caminar. Hacer " +
+                "ejercicio o practicar mindfulness (como cerrar los ojos y concentrarte en tu respiración) también ayuda. Hablar con amigos," +
+                "  tus padres o un consejero puede ser útil si te sientes muy estresado."+
+                "Te dejo unos links de relajacion para mayor detalle: "
+                ,
+                "A veces, la escuela puede hacernos sentir atrapados en un torbellino de tareas y exámenes. Para esos momentos, te sugiero probar" +
+                  "la técnica del ‘Escaneo Corporal’. Es fácil y efectiva. Siéntate cómodo, cierra los ojos y empieza a concentrarte en tu cuerpo." +
+                  "Imagina que una luz cálida pasa desde tu cabeza hasta tus pies, relajando cada parte. Comienza por tu frente, sigue por tus hombros," +
+                  "tus brazos, y así hasta los dedos de los pies. Siente cómo se libera la tensión. ¿Te gustaría intentarlo? Y recuerda: está bien no" +
+                  "tener todo bajo control siempre. Descansar es parte de ser eficiente"           +
+                  "Te dejo unos links de relajacion para mayor detalle:"
+                  ,
+                "La carga académica puede ser muy exigente, y es normal sentirse bajo presión. Una técnica útil es la Visualización Guiada. Tómate "+
+                "un momento para cerrar los ojos y visualiza un lugar que te haga sentir en paz: tal vez una playa, un bosque o tu rincón favorito en" +
+                "  casa. Imagina cada detalle: el sonido de las olas, el olor de los árboles, o el calor del sol en tu piel. Dedica unos minutos a esta" +
+                "    imagen. Te ayudará a liberar la tensión y a refrescar tu mente. ¿Listo para probarlo? Y recuerda: ser amable contigo mismo es clave;"   
+                ]
+            links =["https://www.youtube.com/watch?v=0zsE85khG6I", " https://www.youtube.com/watch?v=YrTHvcuWSxg "]
+             
+        elif opcion == '2':
+            RespuestasSadOp = [   
+                   "Entiendo cómo pueden sentirse los exámenes, ¡A veces parece que nos abruman! Pero aquí te comparto una técnica simple que "+
+                   " puede ayudarte a calmar esos nervios y recuperar el control: la respiración profunda. ¿La conoces? Es genial para estos momentos." +
+                   " Te explico cómo aplicarla con la técnica 4-7-8:" +
+                   " Primero, inhala contando hasta 4, luego mantén el aire por 7 (¡sin soltarlo!), y" +
+                   " finalmente exhala lentamente contando hasta 8. Esto ayuda a tu mente a relajarse," +
+                   " y con un par de repeticiones más, sentirás que los nervios se disipan. " +
+                   " ¿Listo para probarla y ver cómo cambia tu enfoque? Aplícala y luego cuéntame cómo te sientes" +
+                   " Y recuerda: Está bien no ser perfecto. Es normal tener días más difíciles y no siempre poder con todo." +
+                   "Te dejo un link para mayor detalle: https://www.youtube.com/watch?v=4hB_v2mJdGg "
+                , 
+                
+                "El estrés por la escuela es normal. Si sientes que no puedes con todo, prueba esta técnica: respira profundo, "+
+                "sostén el aire por 4 segundos y exhala despacio. Esto te ayuda a calmar la mente. Divide las tareas en partes pequeñas " +
+                "y hazlas una por una. Usa un horario sencillo para organizarte y date descansos cortos para estirarte o caminar. Hacer " +
+                "ejercicio o practicar mindfulness (como cerrar los ojos y concentrarte en tu respiración) también ayuda. Hablar con amigos," +
+                "  tus padres o un consejero puede ser útil si te sientes muy estresado."+
+                "Te dejo un link de relajacion para mayor detalle: https://www.youtube.com/watch?v=0zsE85khG6I "
+                ,
+                "A veces, la escuela puede hacernos sentir atrapados en un torbellino de tareas y exámenes. Para esos momentos, te sugiero probar" +
+                  "la técnica del ‘Escaneo Corporal’. Es fácil y efectiva. Siéntate cómodo, cierra los ojos y empieza a concentrarte en tu cuerpo." +
+                  "Imagina que una luz cálida pasa desde tu cabeza hasta tus pies, relajando cada parte. Comienza por tu frente, sigue por tus hombros," +
+                  "tus brazos, y así hasta los dedos de los pies. Siente cómo se libera la tensión. ¿Te gustaría intentarlo? Y recuerda: está bien no" +
+                  "tener todo bajo control siempre. Descansar es parte de ser eficiente"           +
+                  "Te dejo unos links de relajacion para mayor detalle: https://www.youtube.com/watch?v=YrTHvcuWSxg "
+                  ,
+                "La carga académica puede ser muy exigente, y es normal sentirse bajo presión. Una técnica útil es la Visualización Guiada. Tómate "+
+                "un momento para cerrar los ojos y visualiza un lugar que te haga sentir en paz: tal vez una playa, un bosque o tu rincón favorito en" +
+                "  casa. Imagina cada detalle: el sonido de las olas, el olor de los árboles, o el calor del sol en tu piel. Dedica unos minutos a esta" +
+                "    imagen. Te ayudará a liberar la tensión y a refrescar tu mente. ¿Listo para probarlo? Y recuerda: ser amable contigo mismo es clave;"   
+                ]
+            links =["https://www.youtube.com/watch?v=4hB_v2mJdGg", "https://www.youtube.com/watch?v=0zsE85khG6I", "https://www.youtube.com/watch?v=YrTHvcuWSxg"]
+        elif opcion == '3':
+            RespuestasSadOp = [    
+                   "Sé que los problemas familiares pueden sentirse muy pesados y afectar tu bienestar. Una estrategia útil es la ‘Meditación de Compasión’. Encuentra un lugar tranquilo, cierra los ojos y respira profundo. Visualiza a ti mismo enviándote compasión y entendimiento, como si estuvieras abrazando tu propio dolor. Luego, imagina enviando esa misma compasión a tu familia, incluso si es difícil. Esto no resuelve los problemas, pero puede ayudarte a liberar la tensión emocional. También, un paseo al aire libre puede despejar tu mente y darte claridad. Y nunca olvides que hablar con alguien que te apoye es fundamental." +
+                   "Te dejo un link con algunos videos graciosos para que rias un rato: https://www.youtube.com/watch?v=5x1v2l8OAnk&ab_channel=LosTitis-CuentosyCancionesdeMotivaci%C3%B3nInfantil ",
+                   "Lamento que estés pasando por una situación tan difícil. Los problemas familiares pueden ser muy estresantes, especialmente cuando intentas mantener el enfoque en otras áreas de tu vida. A veces, hablar con alguien en quien confíes o escribir sobre lo que sientes puede aliviar la carga. Recuerda, no tienes que enfrentar esto solo, busca a un docente, tutor o ayuda profesional para contarle lo que te pasa." +
+                   "Espero que este consejo te sea útil, recuerda que estoy aquí para ayudarte. "+
+                    "Para que rias un poquito, te dejo unos chistes:"
+            ]
+            links =["https://www.youtube.com/watch?v=5x1v2l8OAnk&ab_channel=LosTitis-CuentosyCancionesdeMotivaci%C3%B3nInfantil "]
+
+    else: #neutro
+        respuesta = 'Respuesta para neutro'
+    print("RespuestasSadOp[0]; ",RespuestasSadOp[0])
+    
+    return RespuestasSadOp[0], links
+
+def respuestasSegundoNivelAfirmativo (bandera, opcion, emocion): #Cuando indica que si le ayudo la respuesta anterior
+    if bandera.upper() == 'SI':
+        if emocion == 'sad':
+            if opcion == '1':
+                respuestas = ["¡Me alegra mucho escuchar eso! A veces, pequeños pasos son suficientes para darle a nuestra mente un respiro y ganar confianza. Felicidades por darte el tiempo de probar una técnica para calmarte."
+                            , "Recuerda que esta sensación de calma que alcanzaste ahora es una prueba de que tienes la capacidad de gestionar tus emociones en momentos difíciles. Si en algún momento vuelves a sentirte ansioso, piensa en esta experiencia y repite lo que te ayudó."
+                            , "¿Te gustaría aprender alguna otra estrategia para futuras ocasiones? Siempre puedes fortalecer tus habilidades para enfrentar desafíos y lograr tus metas."
+
+                ]
+            elif opcion == '2':
+                respuestas = ["¿Sabías que estudiar en bloques de tiempo puede ayudarte a concentrarte mejor y evitar el agobio? Esta es una técnica increíblemente útil y, además, sencilla de aplicar. Usar bloques cortos de tiempo hace que estudiar se sienta más manejable y menos pesado."
+                            , "Una de las técnicas más recomendadas es el método Pomodoro: consiste en estudiar durante 25 minutos y luego darte un descanso de 5. Estos pequeños descansos ayudan a tu cerebro a descansar y a procesar mejor la información, evitando que te sientas agotado."
+                            ,"Como decía Einstein: 'No soy tan inteligente; simplemente trabajo en los problemas más tiempo que los demás.' No se trata de cuántas horas estudias, sino de cómo organizas ese tiempo para aprovecharlo al máximo."
+                            ,"Con un buen plan, puedes lograr mucho más en menos tiempo y con menos esfuerzo. Si quieres estructurar bien tu tiempo, te propongo que armes un horario simple con bloques de estudio y descanso. Así, podrás ver cuánto tiempo tienes y cómo aprovecharlo mejor." ]
+            
+            elif opcion == '3':
+                respuestas = "Genial, me alegro aver ayudado. ¿Deseas que te ayude en alguna tarea o consejo académico?"
+
+            
+
+        
+
+        
 
 if __name__ == '__main__':
     # Detecta si está en el entorno de desarrollo

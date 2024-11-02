@@ -6,6 +6,7 @@
     <title>Chat App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/logoGrande.png') }}" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 </head>
@@ -39,7 +40,7 @@
                             <div>{{ mensaje.mensaje }}</div>
                             <span class="hora">{{ mensaje.hora }}</span>
                         </div>
-                        <img class="iconoChat user" src="/static/images/icono_usuario2.png" alt="ChatUser" />
+                        <img class="iconoChat user" src="/static/images/icono_usuario.png" alt="ChatUser" />
                     {% else %}
                         <!-- Mensaje del bot -->
                         <img class="iconoChat bot" src="/static/images/logoGrande.png" alt="ChatBot" />
@@ -56,10 +57,23 @@
                 <div class="container_mensaje_user"> 
                     <img class="iconoChat user" src="/static/images/logoGrande.png" alt="ChatUser">   
                     {% if mesajeInicial !='' %}
-                        <div class="message bot">{{mesajeInicial}}</div> 
+                        <div class="message bot">{{mesajeInicial}}
+                            {% if alternativas !=None %}
+                            <p>Aqui te dejo algunas causas posibles:</p>
+                                <ul>
+                            {%for alternativa in alternativas %}
+                            
+                                    <li>{{alternativa}}</li>
+                            {% endfor%}
+                                </ul>
+                            {% endif%} 
+                        </div> 
                     {% else %}
                         <div class="message bot">Hola {{user}} mucho gusto, en que te puedo ayudar hoy</div> 
                     {% endif%}
+
+                    
+                    
 
                 </div>
                 {% endif %}
